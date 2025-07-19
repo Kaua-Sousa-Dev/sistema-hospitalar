@@ -1,0 +1,3 @@
+ID : 0, Nome: k, CPF: 222, Idade: 12, MedicoID: 1, Estado: 3
+ID : 1, Nome: w, CPF: 1223, Idade: 11, MedicoID: 1, Estado: 2
+ID : 1, Nome: op, CPF: 12333, Idade: 14, MedicoID: 1, Estado: 1

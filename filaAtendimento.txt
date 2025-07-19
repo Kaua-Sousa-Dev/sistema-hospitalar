@@ -1,0 +1,13 @@
+--- Fila de Atendimento ---
+
+Medico: kaua;sousa, (ID: 0)
+------------------------------------
+ID: 0, Nome: , Estado: Desconhecido
+ID: 0, Nome: , Estado: Desconhecido
+ID: 0, Nome: , Estado: Desconhecido
+
+Medico: uytrt, (ID: 0)
+------------------------------------
+ID: 0, Nome: , Estado: Desconhecido
+ID: 0, Nome: , Estado: Desconhecido
+ID: 0, Nome: , Estado: Desconhecido

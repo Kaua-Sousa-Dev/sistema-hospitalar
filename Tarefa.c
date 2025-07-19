@@ -1,0 +1,744 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <windows.h>
+
+#define ARQUIVOPACIENTE "pacientesData.txt"
+#define ARQUIVOMEDICO "medicosData.txt"
+
+/*
+opcoes
+1- Gestao de Pacientes
+2- Gestao de Medicos
+3- Fila de Atendimento
+4- Sair do Sistema
+*/
+
+/*
+Feitos:
+- Saida do sistema
+- Menu
+- Gestao de Pacientes
+- Gestao de Medicos
+- Fila de Atendimento
+*/
+
+typedef struct {
+    int  idMedico;
+    char nomeMedico[256];
+    char crm[20];
+    char especialidade[100];
+} Medico;
+
+typedef struct
+{
+    int idPaciente;
+    char nomePaciente[256];
+    char cpfPaciente[16];
+    int idadePaciente;
+    int idMedico;
+    int estadoPaciente;
+} Paciente;
+
+int menuPrincipal();
+int gestaoPacientes();
+void textoMenuPrincipal();
+int gestaoMedicos();
+void filaAtendimento();
+
+int main(){
+    int sair_sistema = 1;
+    while (sair_sistema)
+    {
+        switch (menuPrincipal()){
+
+            case 1:
+                gestaoPacientes();
+                break;
+
+            case 2:
+                gestaoMedicos();
+                break;
+
+            case 3:
+                filaAtendimento();
+                break;
+
+            case 4:
+                sair_sistema = 0;
+                break;
+            
+            default:
+                printf("opcao nao encontrada, selecione uma valida!\n");
+                break;
+
+    }
+    }
+    printf("Saindo do sistema...\n");
+    Sleep(2000);
+    system("pause");
+    return 0;
+}
+
+void textoMenuPrincipal(){
+    printf("Escolha uma das opcoes:\n1- Gestao de Pacientes\n2- Gestao de Medicos\n3- Fila de Atendimento\n4- Sair do Sistema\n-> ");
+}
+
+int menuPrincipal(){
+
+    int opcao = 0;
+    textoMenuPrincipal();
+    scanf("%d", &opcao);
+    return opcao;
+}
+
+int idExiste(int idComparar){
+    FILE *fptr;
+    char linha[256];
+    int idLido;
+    fptr = fopen(ARQUIVOPACIENTE, "r");
+    
+    while (fgets(linha, 256, fptr) != NULL)
+    {
+        sscanf(linha, "%d", &idLido);
+        if (idLido == idComparar){
+            fclose(fptr);
+            return 1;
+        }
+    }
+    fclose(fptr);
+    return 0;
+}
+
+int criarId(){
+    int idValido = 0;
+    while (idExiste(idValido))
+    {
+        idValido++;
+    }
+    return idValido;
+    
+}
+
+Paciente consultaDados(int idBusca){
+    FILE *fptr;
+    Paciente consultado;
+    consultado.idPaciente = -1;
+    char linha[256];
+
+    fptr = fopen(ARQUIVOPACIENTE, "r");
+    
+    while (fgets(linha, 256, fptr) != NULL)
+    {
+        sscanf(linha, "ID: %d, Nome: %s, CPF: %s, Idade: %d, MedicoID: %d, Estado: %d", &consultado.idPaciente, consultado.nomePaciente, consultado.cpfPaciente, &consultado.idadePaciente, &consultado.idMedico, &consultado.estadoPaciente);
+        if (consultado.idPaciente == idBusca){
+            fclose(fptr);
+            return consultado;
+        }
+    }
+    fclose(fptr);
+    return consultado;
+}
+//TIPO 1 PACIENTE, TIPO 2 MEDICO
+void atualizarRegistro(int idAtualizar, int tipo) {
+    FILE *fptr, *temp;
+    char linha[256];
+    int encontrado = 0;
+
+    // Structs separados
+    typedef struct {
+        int id;
+        char nome[256];
+        char cpf[20];
+        int idade;
+        int idMedico;
+        int estado;
+    } Paciente;
+
+    typedef struct {
+        int id;
+        char nome[256];
+        char crm[20];
+        char especialidade[100];
+    } Medico;
+
+    // Abrir os arquivos corretos
+    if (tipo == 1) {
+        // Paciente
+        Paciente p;
+        fptr = fopen("pacientesData.txt", "r");
+        temp = fopen("temp.txt", "w");
+
+        while (fgets(linha, sizeof(linha), fptr)) {
+            sscanf(linha, "ID: %d, Nome: %s, CPF: %s, Idade: %d, MedicoID: %d, Estado: %d", &p.id, p.nome, p.cpf, &p.idade, &p.idMedico, &p.estado);
+
+            if (p.id == idAtualizar) {
+                encontrado = 1;
+                getchar(); // limpar buffer
+
+                printf("Novo nome:\n-> ");
+                fgets(p.nome, sizeof(p.nome), stdin);
+                p.nome[strcspn(p.nome, "\n")] = '\0';
+                for(int i = 0; p.nome[i]; i++) if(p.nome[i] == ' ') p.nome[i] = ';';
+
+                printf("Novo CPF:\n-> ");
+                fgets(p.cpf, sizeof(p.cpf), stdin);
+                p.cpf[strcspn(p.cpf, "\n")] = '\0';
+
+                printf("Nova idade:\n-> ");
+                scanf("%d", &p.idade);
+
+                printf("Novo ID do medico:\n-> ");
+                scanf("%d", &p.idMedico);
+
+                printf("Novo estado (1-Leve, 2-Moderado, 3-Grave):\n-> ");
+                scanf("%d", &p.estado);
+            }
+
+            fprintf(temp, "ID: %d, Nome: %s, CPF: %s, Idade: %d, MedicoID: %d, Estado: %d\n", p.id, p.nome, p.cpf, p.idade, p.idMedico, p.estado);
+        }
+    } else if (tipo == 2) {
+        // Médico
+        Medico m;
+        fptr = fopen("medicosData.txt", "r");
+        temp = fopen("temp.txt", "w");
+
+        while (fgets(linha, sizeof(linha), fptr)) {
+            sscanf(linha, "ID: %d, Nome: %s, CRM: %s, Especialidade: %s", &m.id, m.nome, m.crm, m.especialidade);
+
+            if (m.id == idAtualizar) {
+                encontrado = 1;
+                getchar(); // limpar buffer
+
+                printf("Novo nome:\n-> ");
+                fgets(m.nome, sizeof(m.nome), stdin);
+                m.nome[strcspn(m.nome, "\n")] = '\0';
+                for(int i = 0; m.nome[i]; i++) if(m.nome[i] == ' ') m.nome[i] = ';';
+
+                printf("Novo CRM:\n-> ");
+                fgets(m.crm, sizeof(m.crm), stdin);
+                m.crm[strcspn(m.crm, "\n")] = '\0';
+
+                printf("Nova especialidade:\n-> ");
+                fgets(m.especialidade, sizeof(m.especialidade), stdin);
+                m.especialidade[strcspn(m.especialidade, "\n")] = '\0';
+                for(int i = 0; m.especialidade[i]; i++) if(m.especialidade[i] == ' ') m.especialidade[i] = ';';
+            }
+
+            fprintf(temp, "ID: %d, Nome: %s, CRM: %s, Especialidade: %s\n", m.id, m.nome, m.crm, m.especialidade);
+        }
+    } else {
+        printf("Tipo invalido. Use 1 para paciente ou 2 para medico.\n");
+        return;
+    }
+
+    fclose(fptr);
+    fclose(temp);
+
+    if (tipo == 1) {
+        remove("pacientesData.txt");
+        rename("temp.txt", "pacientesData.txt");
+    } else {
+        remove("medicosData.txt");
+        rename("temp.txt", "medicosData.txt");
+    }
+
+    if (encontrado)
+        printf("Registro atualizado com sucesso!\n");
+    else
+        printf("ID nao encontrado. Nenhuma alteracao feita.\n");
+}
+
+void excluirPaciente(int idPaciente) {
+    FILE *origem, *temporario;
+    char linha[256];
+    int idLinha;
+    int encontrado = 0;
+
+    origem = fopen(ARQUIVOPACIENTE, "r");
+    temporario = fopen("temp.txt", "w");
+
+    if (origem == NULL || temporario == NULL) {
+        printf("Erro ao abrir os arquivos.\n");
+        return;
+    }
+
+    while (fgets(linha, sizeof(linha), origem) != NULL) {
+        // extrai o ID da linha
+        if (sscanf(linha, "%d", &idLinha) == 1) {
+            if (idLinha != idPaciente) {
+                fputs(linha, temporario); // mantém no novo arquivo
+            } else {
+                encontrado = 1; // paciente foi encontrado e será excluído
+            }
+        } else {
+            // Se a linha estiver mal formatada, ainda assim mantenha
+            fputs(linha, temporario);
+        }
+    }
+
+    fclose(origem);
+    fclose(temporario);
+
+    if (encontrado) {
+        remove(ARQUIVOPACIENTE);             // remove original
+        rename("temp.txt", ARQUIVOPACIENTE); // renomeia o temporário
+        printf("Paciente com ID %d excluído com sucesso.\n", idPaciente);
+    } else {
+        remove("temp.txt"); // não precisa do temporário se não encontrou
+        printf("Paciente com ID %d não encontrado.\n", idPaciente);
+    }
+}
+
+int gestaoPacientes(){
+    int opSelecionada = 0;
+    char linha[256];
+    char idPaciente[256];
+    char idArquivo[256];
+
+
+    printf("Selecione a operacao requerida:\n1- Cadastrar Paciente\n2- Consultar Paciente\n3- Atualizar Paciente\n4- Excluir Paciente\n-> "); 
+    scanf("%d", &opSelecionada);
+
+    getchar();//consumir \n do scanf
+
+    switch (opSelecionada)
+    {
+    //CADASTRO PACIENTE
+
+    case 1:{
+            Paciente pacienteCadastro;
+
+            pacienteCadastro.idPaciente = criarId();
+
+            printf("Digite o nome do paciente:\n->");
+            fgets(pacienteCadastro.nomePaciente, 256, stdin);
+            pacienteCadastro.nomePaciente[strcspn(pacienteCadastro.nomePaciente, "\n")] = '\0';//remove o \n do final, pra nn dar erro no output
+            for(int i = 0; pacienteCadastro.nomePaciente[i]; i++){
+                if(pacienteCadastro.nomePaciente[i] == ' '){
+                    pacienteCadastro.nomePaciente[i] = ';';
+                }
+            }
+
+            printf("Digite o cpf do paciente:\n->");
+            fgets(pacienteCadastro.cpfPaciente, 256, stdin);
+            pacienteCadastro.cpfPaciente[strcspn(pacienteCadastro.cpfPaciente, "\n")] = '\0';
+
+            printf("Digite a idade do paciente:\n->");
+            scanf("%d", &pacienteCadastro.idadePaciente);
+
+            getchar();
+
+            printf("Digite o id do medico responsavel:\n->");
+            scanf("%d", &pacienteCadastro.idMedico);
+
+            printf("Digite o numero do estado do paciente:\n1- Leve\n2- Moderado\n3- Grave\n->");
+            scanf("%d", &pacienteCadastro.estadoPaciente);
+
+            FILE *pacientesData;
+            pacientesData = fopen(ARQUIVOPACIENTE, "a");
+
+    //      ID NOME CPF IDADE IDMEDICO ESTADOPACIENTE
+            fprintf(pacientesData,"ID : %d, Nome: %s, CPF: %s, Idade: %d, MedicoID: %d, Estado: %d\n", pacienteCadastro.idPaciente, pacienteCadastro.nomePaciente, pacienteCadastro.cpfPaciente, pacienteCadastro.idadePaciente, pacienteCadastro.idMedico, pacienteCadastro.estadoPaciente);
+            fclose(pacientesData);
+            printf("Cadastrado com Sucesso!\n");
+        break;
+    }
+
+    // consultar
+    case 2:{
+        int id;
+        printf("Digite o Id a ser consultado:\n-> ");
+        scanf("%d", &id);
+        Paciente pacienteConsultado = consultaDados(id);
+        for(int i = 0;pacienteConsultado.nomePaciente[i];i++){
+            if(pacienteConsultado.nomePaciente[i] == ';'){
+                pacienteConsultado.nomePaciente[i] = ' ';
+            }
+        }
+        if (pacienteConsultado.idPaciente == -1) {
+            printf("Dados noo encontrados, ID inexistente\n");
+        } else {
+            printf("ID: %d\n", pacienteConsultado.idPaciente);
+            printf("Nome: %s\n", pacienteConsultado.nomePaciente);
+            printf("Cpf: %s\n", pacienteConsultado.cpfPaciente);
+            printf("Idade: %d\n", pacienteConsultado.idadePaciente);
+            printf("ID Medico: %d\n", pacienteConsultado.idMedico);
+            switch (pacienteConsultado.estadoPaciente)
+            {
+            case 1:
+                printf("Estado: Leve\n");
+                break;
+            case 2:
+                printf("Estado: Moderado\n");
+                break;
+            case 3:
+                printf("Estado: Grave\n");
+                break;
+            }
+        }
+    }    
+        break;
+    //Atualizar a partir do ID
+    case 3:{
+        int id, op;
+        op = 1;
+        printf("Digite o ID que voce quer atualizar os dados:\n-> ");
+        scanf("%d", &id);
+        atualizarRegistro(id, op);
+        break;
+    }
+    case 4:{
+        int id;
+        printf("Digite o id do paciente que quer excluir:\n-> ");
+        scanf("%d", &id);
+        excluirPaciente(id);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+/* Verifica se o ID já existe no arquivo de médicos */
+int idMedicoExiste(int idComp) {
+    FILE *f = fopen(ARQUIVOMEDICO, "r");
+    char linha[256];
+    int idLido;
+
+    if (!f) return 0;                    /* arquivo ainda não existe */
+
+    while (fgets(linha, sizeof(linha), f)) {
+        if (sscanf(linha, "%d", &idLido) == 1 && idLido == idComp) {
+            fclose(f);
+            return 1;
+        }
+    }
+    fclose(f);
+    return 0;
+}
+
+/* Gera o menor ID livre para médicos */
+int criarIdMedico() {
+    int id = 0;
+    while (idMedicoExiste(id)) id++;
+    return id;
+}
+
+/* Consulta os dados de um médico pelo ID */
+Medico consultaMedico(int idBusca) {
+    FILE *f = fopen(ARQUIVOMEDICO, "r");
+    Medico m;              m.idMedico = -1;
+    char linha[256];
+
+    if (!f) return m;      /* arquivo não existe */
+
+    while (fgets(linha, sizeof(linha), f)) {
+        sscanf(linha, "ID: %d, Nome: %s, CRM: %s, Especialidade: %s",
+               &m.idMedico, m.nomeMedico, m.crm, m.especialidade);
+        if (m.idMedico == idBusca) { fclose(f); return m; }
+    }
+    fclose(f);
+    return m;              /* não encontrado → idMedico = -1 */
+}
+
+/* Exclusão de médico (ID inteiro) */
+void excluirMedico(int idMedico) {
+    FILE *orig = fopen(ARQUIVOMEDICO, "r");
+    FILE *tmp  = fopen("tmpMed.txt",      "w");
+    char linha[256];
+    int  idLinha, encontrado = 0;
+
+    if (!orig || !tmp) { puts("Erro ao abrir arquivos."); return; }
+
+    while (fgets(linha, sizeof(linha), orig)) {
+        if (sscanf(linha, "%d", &idLinha) == 1 && idLinha == idMedico) {
+            encontrado = 1;           /* descarta a linha */
+        } else {
+            fputs(linha, tmp);        /* mantém            */
+        }
+    }
+    fclose(orig); fclose(tmp);
+
+    if (encontrado) {
+        remove(ARQUIVOMEDICO);
+        rename("tmpMed.txt", ARQUIVOMEDICO);
+        printf("Medico ID %d excluido com sucesso.\n", idMedico);
+    } else {
+        remove("tmpMed.txt");
+        printf("Medico ID %d nao encontrado.\n", idMedico);
+    }
+}
+
+int gestaoMedicos() {
+    int opcao;
+
+    printf("Selecione a operacao:\n"
+           "1- Cadastrar Medico\n"
+           "2- Consultar Medico\n"
+           "3- Atualizar Medico\n"
+           "4- Excluir Medico\n-> ");
+    scanf("%d", &opcao);  getchar();   /* consome '\n' */
+
+    switch (opcao) {
+
+    /* ---------- 1. CADASTRAR MÉDICO ---------- */
+    case 1: {
+        Medico m;
+        m.idMedico = criarIdMedico();
+
+        printf("Nome do medico:\n-> ");
+        fgets(m.nomeMedico, sizeof(m.nomeMedico), stdin);
+        m.nomeMedico[strcspn(m.nomeMedico, "\n")] = '\0';
+        for (int i=0; m.nomeMedico[i]; i++) if (m.nomeMedico[i]==' ') m.nomeMedico[i]=';';
+
+        printf("CRM:\n-> ");
+        fgets(m.crm, sizeof(m.crm), stdin);
+        m.crm[strcspn(m.crm, "\n")] = '\0';
+
+        printf("Especialidade:\n-> ");
+        fgets(m.especialidade, sizeof(m.especialidade), stdin);
+        m.especialidade[strcspn(m.especialidade, "\n")] = '\0';
+        for (int i=0; m.especialidade[i]; i++) if (m.especialidade[i]==' ') m.especialidade[i]=';';
+
+        FILE *f = fopen(ARQUIVOMEDICO, "a");
+        fprintf(f, "ID: %d, Nome: %s, CRM: %s, Especialidade: %s\n", m.idMedico,
+                                    m.nomeMedico,
+                                    m.crm,
+                                    m.especialidade);
+        fclose(f);
+        puts("Medico cadastrado com sucesso!");
+        break;
+    }
+
+    /* ---------- 2. CONSULTAR MÉDICO ---------- */
+    case 2: {
+        int id;
+        printf("ID do medico a consultar:\n-> ");
+        scanf("%d", &id);
+
+        Medico m = consultaMedico(id);
+        if (m.idMedico == -1) {
+            puts("Medico nao encontrado.");
+        } else {
+            for (int i=0;m.nomeMedico[i];i++) if(m.nomeMedico[i]==';') m.nomeMedico[i]=' ';
+            for (int i=0;m.especialidade[i];i++) if(m.especialidade[i]==';') m.especialidade[i]=' ';
+
+            printf("ID: %d\nNome: %s\nCRM: %s\nEspecialidade: %s\n",
+                   m.idMedico, m.nomeMedico, m.crm, m.especialidade);
+        }
+        break;
+    }
+
+    /* ---------- 3. ATUALIZAR MÉDICO ---------- */
+    case 3: {
+        int id;
+        printf("ID do medico a atualizar:\n-> ");
+        scanf("%d", &id);
+        atualizarRegistro(id, 2);   /* tipo 2 = médico */
+        break;
+    }
+
+    /* ---------- 4. EXCLUIR MÉDICO ---------- */
+    case 4: {
+        int id;
+        printf("ID do medico a excluir:\n-> ");
+        scanf("%d", &id);
+        excluirMedico(id);
+        break;
+    }
+
+    default:
+        puts("Opcao invalida.");
+    }
+
+    return 0;         
+}
+
+void filaAtendimento() {
+    int escolha;
+
+    // Menu fila de atendimento
+    do {
+        system("cls || clear");  // limpa terminal (Windows/Linux)
+        printf("1 - Visualizar fila\n");
+        printf("2 - Alterar medico de paciente\n");
+        printf("3 - Atualizar estado (atendido ou alta)\n");
+        printf("4 - Voltar\n");
+        printf("----------------------------------------\n");
+        printf("Escolha uma opcao: ");
+        scanf("%d", &escolha);
+        getchar();
+
+        // ler lista de pacientes e médicos
+        if (escolha == 1 || escolha == 2 || escolha == 3) {
+            FILE *f = fopen("pacientesData.txt", "r");
+            FILE *fmed = fopen("medicosData.txt", "r");
+
+            if (!f || !fmed) {
+                printf("Erro ao abrir arquivos de dados.\n");
+                return;
+            }
+
+            Paciente pacientes[100];
+            Medico medicos[100];
+            int totalPac = 0, totalMedicos = 0;
+            char linha[256];
+
+            // lê os dados dos pacientes
+            while (fgets(linha, sizeof(linha), f)) {
+                sscanf(linha, "ID: %d, Nome: %s, CPF: %s, Idade: %d, MedicoID: %d, Estado: %d",
+                    &pacientes[totalPac].idPaciente,
+                    pacientes[totalPac].nomePaciente,
+                    pacientes[totalPac].cpfPaciente,
+                    &pacientes[totalPac].idadePaciente,
+                    &pacientes[totalPac].idMedico,
+                    &pacientes[totalPac].estadoPaciente);
+                totalPac++;
+            }
+            
+            // lê os dados dos médicos
+            while (fgets(linha, sizeof(linha), fmed)) {
+                sscanf(linha, "ID: %d, Nome: %s, CRM: %s, Especialidade: %s",
+                    &medicos[totalMedicos].idMedico,
+                    medicos[totalMedicos].nomeMedico,
+                    medicos[totalMedicos].crm,
+                    medicos[totalMedicos].especialidade);
+                totalMedicos++;
+            }
+
+            fclose(f);
+            fclose(fmed);
+
+            // visualização da fila de atendimento
+            if (escolha == 1) {
+                FILE *fout = fopen("filaAtendimento.txt", "w");
+                fprintf(fout, "--- Fila de Atendimento ---\n");
+
+                for (int i = 0; i < totalMedicos; i++) {
+                    fprintf(fout, "\nMedico: %s (ID: %d)\n", medicos[i].nomeMedico, medicos[i].idMedico);
+                    fprintf(fout, "------------------------------------\n");
+
+                    Paciente doMedico[100];
+                    int qtd = 0;
+                    for (int j = 0; j < totalPac; j++) {
+                        if (pacientes[j].idMedico == medicos[i].idMedico) {
+                            doMedico[qtd++] = pacientes[j];
+                        }
+                    }
+
+                    // ordenando pacientes por estado
+                    for (int a = 0; a < qtd - 1; a++) {
+                        for (int b = a + 1; b < qtd; b++) {
+                            if (doMedico[a].estadoPaciente > doMedico[b].estadoPaciente) {
+                                Paciente temp = doMedico[a];
+                                doMedico[a] = doMedico[b];
+                                doMedico[b] = temp;
+                            }
+                        }
+                    }
+
+                    if (qtd == 0) {
+                        fprintf(fout, "Nenhum paciente na fila.\n");
+                    } else {
+                        for (int p = 0; p < qtd; p++) {
+                            fprintf(fout, "ID: %d, Nome: %s, Estado: ", doMedico[p].idPaciente, doMedico[p].nomePaciente);
+                            switch (doMedico[p].estadoPaciente) {
+                                case 1: fprintf(fout, "Leve\n"); break;
+                                case 2: fprintf(fout, "Moderado\n"); break;
+                                case 3: fprintf(fout, "INTERNACAO\n"); break;
+                                default: fprintf(fout, "Desconhecido\n");
+                            }
+                        }
+                    }
+                }
+                fclose(fout);
+                printf("\nFila salva em 'filaAtendimento.txt'.\n");
+            }
+
+            // alterar médico de paciente
+            else if (escolha == 2) {
+                int id;
+                printf("Digite o ID do paciente: ");
+                scanf("%d", &id);
+                int achou = 0;
+
+                for (int i = 0; i < totalPac; i++) {
+                    if (pacientes[i].idPaciente == id) {
+                        achou = 1;
+                        if (pacientes[i].estadoPaciente == 3) {
+                            printf("Paciente em INTERNACAO, não pode trocar de medico.\n");
+                        } else {
+                            int novo;
+                            printf("Digite o novo ID do médico: ");
+                            scanf("%d", &novo);
+                            pacientes[i].idMedico = novo;
+                            printf("Medico atualizado com sucesso.\n");
+                        }
+                        break;
+                    }
+                }
+                if (!achou) printf("Paciente nao encontrado.\n");
+
+                FILE *fout = fopen("pacientesData.txt", "w");
+                for (int i = 0; i < totalPac; i++) {
+                    fprintf(fout, "ID: %d, Nome: %s, CPF: %s, Idade: %d, MedicoID: %d, Estado: %d\n",
+                        pacientes[i].idPaciente, pacientes[i].nomePaciente,
+                        pacientes[i].cpfPaciente, pacientes[i].idadePaciente,
+                        pacientes[i].idMedico, pacientes[i].estadoPaciente);
+                }
+                fclose(fout);
+            }
+
+            // alterar estado do paciente
+            else if (escolha == 3) {
+                int id;
+                printf("Digite o ID do paciente: ");
+                scanf("%d", &id);
+                int achou = 0;
+
+                for (int i = 0; i < totalPac; i++) {
+                    if (pacientes[i].idPaciente == id) {
+                        achou = 1;
+                        int novoEstado;
+                        printf("Digite novo estado (4 = atendido / 5 = alta): ");
+                        scanf("%d", &novoEstado);
+
+                        if (novoEstado == 4 || novoEstado == 5) {
+                            FILE *faltos = fopen("filaAlta.txt", "a");
+                            fprintf(faltos, "ID: %d, Nome: %s, Estado anterior: %d\n",
+                                pacientes[i].idPaciente, pacientes[i].nomePaciente, pacientes[i].estadoPaciente);
+                            fclose(faltos);
+
+                            for (int j = i; j < totalPac - 1; j++) {
+                                pacientes[j] = pacientes[j + 1];
+                            }
+                            totalPac--;
+                            printf("Paciente removido da fila e adicionado a fila de alta.\n");
+                        }
+                        break;
+                    }
+                }
+
+                if (!achou) printf("Paciente nao encontrado.\n");
+
+                // Atualiza o arquivo de pacientes
+                FILE *fout = fopen("pacientesData.txt", "w");
+                for (int i = 0; i < totalPac; i++) {
+                    fprintf(fout, "ID: %d, Nome: %s, CPF: %s, Idade: %d, MedicoID: %d, Estado: %d\n",
+                        pacientes[i].idPaciente, pacientes[i].nomePaciente,
+                        pacientes[i].cpfPaciente, pacientes[i].idadePaciente,
+                        pacientes[i].idMedico, pacientes[i].estadoPaciente);
+                }
+                fclose(fout);
+            }
+        }
+
+        // Voltar ao menu principal
+        if (escolha != 4) {
+            printf("\nPressione ENTER para continuar...");
+            getchar();
+        }
+
+    } while (escolha != 4);
+}
