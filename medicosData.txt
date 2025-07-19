@@ -1,2 +1,0 @@
-ID: 0, Nome: kaua;sousa, CRM: 12577, Especialidade: geral
-ID: 0, Nome: uytrt, CRM: 2131321, Especialidade: odonto
