@@ -13,12 +13,6 @@ opcoes
 3- Fila de Atendimento
 4- Sair do Sistema
 */
-/*
-Feitos:
--Saida do sistema
--Menu
-*/
-
 typedef struct
 {
     int idMedico;
@@ -288,7 +282,6 @@ void excluirPaciente(int idPaciente)
         }
         else
         {
-            // Se a linha estiver mal formatada, ainda assim mantenha
             fputs(linha, temporario);
         }
     }
@@ -389,7 +382,7 @@ int gestaoPacientes()
             }
             if (pacienteConsultado.idPaciente == -1)
             {
-                printf("Dados noo encontrados, ID inexistente\n");
+                printf("Dados nao encontrados, ID inexistente\n");
             }
             else
             {
